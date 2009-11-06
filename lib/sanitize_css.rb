@@ -1,7 +1,6 @@
-# Include this module into your ActiveRecord model.
-module CssSanitize
+class SanitizeCSS
 
-  def custom_css=(text)
+  def self.sanitize(text)
     # Mostly stolen from http://code.sixapart.com/svn/CSS-Cleaner/trunk/lib/CSS/Cleaner.pm
     text = "Error: invalid/disallowed characters in CSS" if text =~ /(\w\/\/)/    # a// comment immediately following a letter
     text = "Error: invalid/disallowed characters in CSS" if text =~ /(\w\/\/*\*)/ # a/* comment immediately following a letter
@@ -20,8 +19,11 @@ module CssSanitize
       /[\x00-\x08\x0B\x0C\x0E-\x1F]/, #low bytes -- suspect
       /&\#/, # bad charset
     ]
-    evil.each { |regex| text = "Error: invalid/disallowed characters in CSS" and break if no_comments =~ regex }
-
-    write_attribute :custom_css, text
+    evil.each do |regex| 
+      if no_comments =~ regex
+        text = "Error: invalid/disallowed characters in CSS" and break
+      end
+    end
+    text
   end
 end

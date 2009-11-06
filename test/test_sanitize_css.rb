@@ -1,16 +1,9 @@
-require File.dirname(__FILE__) + '/../test_helper'
+require File.dirname(__FILE__) + '/helper'
+require 'shoulda'
 
-class Site < ActiveRecord::Base
-  include CssSanitize
-end
+class TestSanitizeCSS < Test::Unit::TestCase
 
-class CssSanitizeTest < Test::Unit::TestCase
-
-  before do
-    @site = Site.new(:name => 'Foo', :owner_id => 1)
-  end
-
-  it "disallows evil css" do
+  should "disallow evil css" do
     bad_strings = [
       "div.foo { width: 500px; behavior: url(http://foo.com); height: 200px; }",
       ".test { color: red; background-image: url('javascript:alert');  border: 1px solid brown; }",
@@ -58,58 +51,50 @@ class CssSanitizeTest < Test::Unit::TestCase
       dummy: '//'; background:url(javascript:alert('XSS'));
       }
 STR
-    ]
-    bad_strings.each do |string|
-      @site.custom_css = string
-      @site.custom_css.should == "Error: invalid/disallowed characters in CSS"
+    ].each do |string|
+      assert_equal "Error: invalid/disallowed characters in CSS", SanitizeCSS.sanitize(string)
     end
   end
   
   
-  it "allows good css" do
+  should "allow good css" do
     good_strings = [
       ".test { color: red; border: 1px solid brown; }",
       "h1 { background: url(http://foobar.com/meh.jpg)}",
       "div.foo { width: 500px; height: 200px; }",
       "GI b gkljfl kj { { { ********" # gibberish, but should work.
-    ]
-    good_strings.each do |string|
-      @site.custom_css = string
-      @site.custom_css.should == string
+    ].each do |string|
+      assert_equal string, SanitizeCSS.sanitize(string)
     end
-
   end
 
-  it "does not strip real comments" do
+  should "not strip real comments" do
     text = <<STR
 a.foo { bar: x }
 
 /* Group: header */
 a.bar { x: poo }
 STR
-    @site.custom_css = text
-    @site.custom_css.should == text
+    assert_equal text, SanitizeCSS.sanitize(text)
   end
 
-  it "does strip suspicious comments" do
+  should "strip suspicious comments" do
           text = <<-STR
     a.foo { ba/* hack */r: x }
 
     /* Group: header */
     a.bar { x: poo }
 STR
-    @site.custom_css = text
-    @site.custom_css.should == "Error: invalid/disallowed characters in CSS"
-    @site.custom_css = "Foo /*/**/ Bar"
-    @site.custom_css.should == "Error: invalid/disallowed characters in CSS"
+    assert_equal "Error: invalid/disallowed characters in CSS", SanitizeCSS.sanitize(text)
+    assert_equal "Error: invalid/disallowed characters in CSS", SanitizeCSS.sanitize("Foo /*/**/ Bar")
   end
 
-  it "doesn't allow bad css" do
-    @site.custom_css = <<STR
+  should "not allow bad css" do
+    text = <<STR
 test{ width: expression(alert("sux 2 be u")); }
 a:link { color: red }
 STR
-    @site.custom_css.should == "Error: invalid/disallowed characters in CSS"
+    assert_equal "Error: invalid/disallowed characters in CSS", SanitizeCSS.sanitize(text)
   end
-
+  
 end
