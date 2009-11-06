@@ -1,4 +1,4 @@
-# sanitize_css
+# CheckCSS
 
 This is just a slightly modified and gemified fork of [courtenay/css_file_sanitize](http://github.com/courtenay/css_file_sanitize).
 

@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/helper'
 require 'shoulda'
 
-class TestSanitizeCSS < Test::Unit::TestCase
+class TestCheckCSS < Test::Unit::TestCase
 
   should "disallow evil css" do
     bad_strings = [
@@ -52,7 +52,7 @@ class TestSanitizeCSS < Test::Unit::TestCase
       }
 STR
     ].each do |string|
-      assert_equal "Error: invalid/disallowed characters in CSS", SanitizeCSS.sanitize(string)
+      assert CheckCSS.dirty?(string)
     end
   end
   
@@ -64,7 +64,7 @@ STR
       "div.foo { width: 500px; height: 200px; }",
       "GI b gkljfl kj { { { ********" # gibberish, but should work.
     ].each do |string|
-      assert_equal string, SanitizeCSS.sanitize(string)
+      assert CheckCSS.clean?(string)
     end
   end
 
@@ -75,26 +75,26 @@ a.foo { bar: x }
 /* Group: header */
 a.bar { x: poo }
 STR
-    assert_equal text, SanitizeCSS.sanitize(text)
+    assert CheckCSS.clean?(text)
   end
 
-  should "strip suspicious comments" do
+  should "recognize suspicious comments" do
           text = <<-STR
     a.foo { ba/* hack */r: x }
 
     /* Group: header */
     a.bar { x: poo }
 STR
-    assert_equal "Error: invalid/disallowed characters in CSS", SanitizeCSS.sanitize(text)
-    assert_equal "Error: invalid/disallowed characters in CSS", SanitizeCSS.sanitize("Foo /*/**/ Bar")
+    assert CheckCSS.dirty?(text)
+    assert CheckCSS.dirty?("Foo /*/**/ Bar")
   end
 
-  should "not allow bad css" do
+  should "recognize bad css" do
     text = <<STR
 test{ width: expression(alert("sux 2 be u")); }
 a:link { color: red }
 STR
-    assert_equal "Error: invalid/disallowed characters in CSS", SanitizeCSS.sanitize(text)
+    assert CheckCSS.dirty?(text)
   end
   
 end
