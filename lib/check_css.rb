@@ -37,8 +37,8 @@ private
       %r{(\bdata:\b|eval|cookie|\bwindow\b|\bparent\b|\bthis\b)}i, # suspicious javascript-type words
       %r{behaviou?r|expression|moz-binding|@import|@charset|(java|vb)?script|[\<]|\\\w}i,
       %r{(\<.+>)}, # back slash, html tags,
-      %r{[\x7f-\xff]}, # high bytes -- suspect
-      %r{[\x00-\x08\x0B\x0C\x0E-\x1F]}, #low bytes -- suspect
+      Regexp.new('[\x7f-\xff]', nil, 'n'), # high bytes -- suspect
+      Regexp.new('[\x00-\x08\x0B\x0C\x0E-\x1F]', nil, 'n'), #low bytes -- suspect
       %r{&\#}, # bad charset
     ].any? do |regex|
       text =~ regex
